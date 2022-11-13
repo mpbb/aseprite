@@ -64,7 +64,7 @@ jobs:
               -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
               -DENABLE_TESTS=ON \
               -DENABLE_UI=${{ matrix.enable_ui }} \
-              -DENABLE_CCACHE=$enable_ccache
+              -DENABLE_CCACHE=$enable_ccache \
               -DLAF_BACKEND=${{ matrix.backend }} \
               -DSKIA_DIR=skia \
               -DSKIA_LIBRARY_DIR=skia/out/Release-x64
@@ -74,7 +74,7 @@ jobs:
               -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
               -DENABLE_TESTS=ON \
               -DENABLE_UI=${{ matrix.enable_ui }} \
-              -DENABLE_CCACHE=$enable_ccache
+              -DENABLE_CCACHE=$enable_ccache \
               -DLAF_BACKEND=${{ matrix.backend }}
           fi
         elif [[ "${{ runner.os }}" == "Linux" ]] && \
@@ -89,7 +89,7 @@ jobs:
             -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
             -DENABLE_TESTS=ON \
             -DENABLE_UI=${{ matrix.enable_ui }} \
-            -DENABLE_CCACHE=$enable_ccache
+            -DENABLE_CCACHE=$enable_ccache \
             -DLAF_BACKEND=${{ matrix.backend }} \
             -DSKIA_DIR=skia
         else
@@ -99,7 +99,7 @@ jobs:
             -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
             -DENABLE_TESTS=ON \
             -DENABLE_UI=${{ matrix.enable_ui }} \
-            -DENABLE_CCACHE=$enable_ccache
+            -DENABLE_CCACHE=$enable_ccache \
             -DLAF_BACKEND=${{ matrix.backend }} \
             -DSKIA_DIR=skia
         fi
