@@ -54,8 +54,8 @@ jobs:
     - name: Upload Binaries
       uses: actions/upload-artifact@v3
       with:
-        name: bin
-        path: build/bin
+        name: build
+        path: build
     - name: Running C++ Tests
       shell: bash
       run: |
