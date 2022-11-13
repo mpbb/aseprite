@@ -114,6 +114,7 @@ jobs:
         path: |
           build/bin/aseprite
           build/bin/aseprite.exe
+          build/bin/data
     - name: Running C++ Tests
       shell: bash
       run: |
