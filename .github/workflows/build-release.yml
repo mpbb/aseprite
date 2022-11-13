@@ -9,6 +9,7 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         build_type: [Release]
         enable_ui: [on]
+        backend: [skia]
         include:
           - os: ubuntu-latest
             build_type: Debug
@@ -21,32 +22,86 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1
       if: runner.os == 'Linux'
       with:
-        key: ${{ matrix.os }}-${{ matrix.enable_ui }}
+        key: ${{ matrix.os }}-${{ matrix.enable_ui }}-${{ matrix.backend }}
     - uses: seanmiddleditch/gha-setup-ninja@master
     - uses: ilammy/msvc-dev-cmd@v1
       if: runner.os == 'Windows'
     - name: Install Dependencies
       shell: bash
       run: |
-        if [[ "${{ runner.os }}" == "Linux" ]] ; then
+        if [[ "${{ runner.os }}" == "Windows" ]] ; then
+          if [[ "${{ matrix.backend }}" == "skia" ]] ; then
+            choco install wget
+            wget https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Windows-Release-x64.zip
+            unzip Skia-Windows-Release-x64.zip -d skia
+          fi
+        elif [[ "${{ runner.os }}" == "macOS" ]] ; then
+          brew install pixman freetype harfbuzz zlib
+          if [[ "${{ matrix.backend }}" == "skia" ]] ; then
+            wget https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-macOS-Release-x64.zip
+            unzip Skia-macOS-Release-x64.zip -d skia
+          fi
+        else
           sudo apt-get update -qq
           sudo apt-get install -y \
-            libx11-dev libxcursor-dev libxi-dev
+            libc++-12-dev libc++abi-12-dev \
+            libpixman-1-dev libfreetype6-dev libharfbuzz-dev zlib1g-dev \
+            libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+          if [[ "${{ matrix.backend }}" == "skia" ]] ; then
+            wget https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libc++.zip
+            unzip Skia-Linux-Release-x64-libc++.zip -d skia
+          fi
         fi
     - name: Generating Makefiles
       shell: bash
       run: |
         if [[ "${{ runner.os }}" == "Windows" ]] ; then
           export enable_ccache=off
+          if [[ "${{ matrix.backend }}" == "skia" ]] ; then
+            cmake . -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+              -DENABLE_TESTS=ON \
+              -DENABLE_UI=${{ matrix.enable_ui }} \
+              -DENABLE_CCACHE=$enable_ccache
+              -DLAF_BACKEND=${{ matrix.backend }} \
+              -DSKIA_DIR=skia \
+              -DSKIA_LIBRARY_DIR=skia/out/Release-x64
+          else
+            cmake . -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+              -DENABLE_TESTS=ON \
+              -DENABLE_UI=${{ matrix.enable_ui }} \
+              -DENABLE_CCACHE=$enable_ccache
+              -DLAF_BACKEND=${{ matrix.backend }}
+          fi
+        elif [[ "${{ runner.os }}" == "Linux" ]] && \
+             [[ "${{ matrix.backend }}" == "skia" ]] ; then
+          export enable_ccache=on
+          export CC=clang-12
+          export CXX=clang++-12
+          cmake . -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
+            -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DENABLE_TESTS=ON \
+            -DENABLE_UI=${{ matrix.enable_ui }} \
+            -DENABLE_CCACHE=$enable_ccache
+            -DLAF_BACKEND=${{ matrix.backend }} \
+            -DSKIA_DIR=skia
         else
           export enable_ccache=on
+          cmake . -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DENABLE_TESTS=ON \
+            -DENABLE_UI=${{ matrix.enable_ui }} \
+            -DENABLE_CCACHE=$enable_ccache
+            -DLAF_BACKEND=${{ matrix.backend }} \
+            -DSKIA_DIR=skia
         fi
-        cmake -S . -B build -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
-          -DENABLE_TESTS=ON \
-          -DENABLE_UI=${{ matrix.enable_ui }} \
-          -DENABLE_CCACHE=$enable_ccache
     - name: Compiling
       shell: bash
       run: |
